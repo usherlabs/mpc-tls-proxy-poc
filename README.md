@@ -1,1 +1,2 @@
 # proxy
+Development of a Proof of Concept for a Proxy capable of receiving parameters over HTTP and forming an MPC-TLS connection to the designated destination as per the provided parameters. This foundational component will be crucial to the T Node's core functionality.
