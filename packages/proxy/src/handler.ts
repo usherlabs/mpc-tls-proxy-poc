@@ -7,8 +7,9 @@ import { T_HEADERS } from './utils/constants';
 
 const exec = util.promisify(require('child_process').exec);
 
-const FOWARD_HEADER_KEY = 'foward-';
+const FORWARD_HEADER_KEY = 'forward-';
 const REQUEST_RESPONSE_STRING_SEPERATOR = 'seperator';
+const CONTENT_TYPE = 'content-type';
 
 type CustomRequest = {
 	url: string;
@@ -36,6 +37,7 @@ export async function verifyProof(_request: Request, response: Response) {
 export async function generateProof(request: Request, response: Response) {
 	try {
 		const proxyURL = request.header(T_HEADERS.T_PROXY_URL);
+		const contentTypeHeader = request.header(CONTENT_TYPE);
 		const _redactedParameters = request.header(T_HEADERS.T_REDACTED);
 		const _store = request.header(T_HEADERS.T_STORE);
 		const _shouldPublish = Boolean(request.header(T_HEADERS.T_PUBLISH));
@@ -44,12 +46,21 @@ export async function generateProof(request: Request, response: Response) {
 
 		// get all the fowarded headers
 		const headers = request.headers as Record<string, string>;
+		console.log(headers);
+		// const contentType =
 		const fowardedHeaders = Object.entries(headers)
-			.filter(([headerKey]) => headerKey.startsWith(FOWARD_HEADER_KEY))
+			.filter(([headerKey]) => headerKey.startsWith(FORWARD_HEADER_KEY))
 			.map(([headerKey, headerValue]) => {
-				const key = headerKey.replace(FOWARD_HEADER_KEY, '');
-				return { key, value: headerValue };
+				const key = headerKey.replace(FORWARD_HEADER_KEY, '');
+				return { key: key, value: headerValue };
 			});
+		
+		if(contentTypeHeader){
+			fowardedHeaders.push({
+				key: CONTENT_TYPE,
+				value: contentTypeHeader
+			})
+		}
 
 		//create a json representation of the request
 		const customRequest: CustomRequest = {
@@ -72,7 +83,7 @@ export async function generateProof(request: Request, response: Response) {
 		const output = await exec(
 			`bin/simple_prover '${JSON.stringify(customRequest)}'`,
 		);
-		
+
 		// some loggign on the MPC-TLS connection
 		console.log(`Proof generated with output: \n\n${output.stdout}`);
 		if (output.stderr) {
