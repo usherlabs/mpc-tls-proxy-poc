@@ -1,0 +1,6 @@
+export const T_HEADERS = {
+  T_PROXY_URL: "T-PROXY-URL",
+  T_REDACTED: "T-REDACTED",
+  T_STORE: "T-STORE",
+  T_PUBLISH: "T_PUBLISH",
+};
