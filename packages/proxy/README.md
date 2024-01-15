@@ -24,6 +24,7 @@ curl -X POST http://localhost:3000/proxy \
 -H "T-PROXY-URL: https://jsonplaceholder.typicode.com/posts" \
 -H "T-STORE: storeone" \
 -H "foward-Content-Type: application/json" \
+-H "Content-Type: application/json" \
 -d '{"title": "usher", "body": "labs", "userId": 10}'
 ```
 Note: Replace `http://localhost:3000/` with the url and port of your proxy.
