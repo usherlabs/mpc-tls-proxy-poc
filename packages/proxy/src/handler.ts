@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import parser from 'http-string-parser';
 import util from 'util';
 
-import { T_HEADERS } from './utils/constants';
+import { BLACKLISTED_HEADERS, T_HEADERS } from './utils/constants';
 
 const exec = util.promisify(require('child_process').exec);
 
@@ -37,7 +37,6 @@ export async function verifyProof(_request: Request, response: Response) {
 export async function generateProof(request: Request, response: Response) {
 	try {
 		const proxyURL = request.header(T_HEADERS.T_PROXY_URL);
-		const contentTypeHeader = request.header(CONTENT_TYPE);
 		const _redactedParameters = request.header(T_HEADERS.T_REDACTED);
 		const _store = request.header(T_HEADERS.T_STORE);
 		const _shouldPublish = Boolean(request.header(T_HEADERS.T_PUBLISH));
@@ -46,21 +45,15 @@ export async function generateProof(request: Request, response: Response) {
 
 		// get all the fowarded headers
 		const headers = request.headers as Record<string, string>;
-		console.log(headers);
 		// const contentType =
 		const fowardedHeaders = Object.entries(headers)
-			.filter(([headerKey]) => headerKey.startsWith(FORWARD_HEADER_KEY))
+			.filter(
+				([headerKey]) => !BLACKLISTED_HEADERS.includes(headerKey.toLowerCase()),
+			)
 			.map(([headerKey, headerValue]) => {
 				const key = headerKey.replace(FORWARD_HEADER_KEY, '');
 				return { key: key, value: headerValue };
 			});
-		
-		if(contentTypeHeader){
-			fowardedHeaders.push({
-				key: CONTENT_TYPE,
-				value: contentTypeHeader
-			})
-		}
 
 		//create a json representation of the request
 		const customRequest: CustomRequest = {
