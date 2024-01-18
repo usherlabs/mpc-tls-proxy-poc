@@ -3,12 +3,13 @@ import { Request, Response } from 'express';
 import parser from 'http-string-parser';
 import util from 'util';
 
-import { T_HEADERS } from './utils/constants';
+import { BLACKLISTED_HEADERS, T_HEADERS } from './utils/constants';
 
 const exec = util.promisify(require('child_process').exec);
 
-const FOWARD_HEADER_KEY = 'foward-';
+const FORWARD_HEADER_KEY = 'forward-';
 const REQUEST_RESPONSE_STRING_SEPERATOR = 'seperator';
+const CONTENT_TYPE = 'content-type';
 
 type CustomRequest = {
 	url: string;
@@ -44,11 +45,14 @@ export async function generateProof(request: Request, response: Response) {
 
 		// get all the fowarded headers
 		const headers = request.headers as Record<string, string>;
+		// const contentType =
 		const fowardedHeaders = Object.entries(headers)
-			.filter(([headerKey]) => headerKey.startsWith(FOWARD_HEADER_KEY))
+			.filter(
+				([headerKey]) => !BLACKLISTED_HEADERS.includes(headerKey.toLowerCase()),
+			)
 			.map(([headerKey, headerValue]) => {
-				const key = headerKey.replace(FOWARD_HEADER_KEY, '');
-				return { key, value: headerValue };
+				const key = headerKey.replace(FORWARD_HEADER_KEY, '');
+				return { key: key, value: headerValue };
 			});
 
 		//create a json representation of the request
@@ -72,7 +76,7 @@ export async function generateProof(request: Request, response: Response) {
 		const output = await exec(
 			`bin/simple_prover '${JSON.stringify(customRequest)}'`,
 		);
-		
+
 		// some loggign on the MPC-TLS connection
 		console.log(`Proof generated with output: \n\n${output.stdout}`);
 		if (output.stderr) {
